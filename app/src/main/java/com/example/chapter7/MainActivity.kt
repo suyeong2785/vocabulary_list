@@ -40,6 +40,10 @@ class MainActivity : AppCompatActivity(), WordAdapter.ItemClickListener  {
         binding.deleteImageView.setOnClickListener {
             delete()
         }
+
+        binding.editImageView.setOnClickListener {
+            edit()
+        }
     }
 
     private fun initRecyclerView() {
@@ -71,6 +75,17 @@ class MainActivity : AppCompatActivity(), WordAdapter.ItemClickListener  {
         }.start()
     }
 
+    private fun updateEditWord(word: Word) {
+       val index = wordAdapter.list.indexOfFirst { it.id == word.id }
+        wordAdapter.list[index] = word
+        runOnUiThread {
+            selectedWord = word
+            wordAdapter.notifyItemChanged(index)
+            binding.textTextView.text = word.text
+            binding.meanTextView.text = word.mean
+        }
+    }
+
     private fun delete() {
         if(selectedWord == null) return
 
@@ -88,6 +103,22 @@ class MainActivity : AppCompatActivity(), WordAdapter.ItemClickListener  {
             }
 
         }.start()
+    }
+
+    private val updateEditWordResult = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val editWord = result.data?.getParcelableExtra<Word>("editWord")
+        if(result.resultCode == RESULT_OK && editWord != null) {
+            updateEditWord(editWord)
+        }
+    }
+
+    private fun edit() {
+        if(selectedWord == null) return
+
+        val intent = Intent(this,AddActivity::class.java).putExtra("originWord", selectedWord)
+        updateEditWordResult.launch(intent)
     }
 
     override fun onClick(word: Word) {
